@@ -9,6 +9,7 @@ import           Network.Wai                   (Request, Response, ResponseRecei
 import           Network.Wai.Parse (File, Param)
 import qualified Data.Vault.Lazy               as Vault
 import           Network.Wai.Session           (Session)
+import           IHP.FrameworkConfig           (FrameworkConfig)
 
 type Respond = Response -> IO ResponseReceived
 
@@ -18,4 +19,5 @@ data RequestContext = RequestContext
     , params :: [Param]
     , files :: [File LBS.ByteString]
     , vault :: (Vault.Key (Session IO String String))
+    , frameworkConfig :: FrameworkConfig
     }

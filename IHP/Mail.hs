@@ -12,6 +12,8 @@ module IHP.Mail
 where
 
 import IHP.Prelude
+import IHP.FrameworkConfig
+import IHP.Controller.RequestContext
 import IHP.ControllerSupport
 import IHP.Mail.Types
 
@@ -29,8 +31,8 @@ buildMail mail = let ?mail = mail in simpleMail (to mail) from subject (cs $ tex
 -- | Sends an email
 --
 -- Uses the mail server provided in the controller context, configured in Config/Config.hs
-sendMail :: (Config.FrameworkConfig, BuildMail mail) => mail -> IO ()
-sendMail mail = buildMail mail >>= sendWithMailServer Config.mailServer
+sendMail :: (BuildMail mail, ?requestContext :: RequestContext ) => mail -> IO ()
+sendMail mail = buildMail mail >>= sendWithMailServer ((mailServer . frameworkConfig) ?requestContext)
 
 sendWithMailServer :: MailServer -> Mail -> IO ()
 sendWithMailServer SES { .. } mail = do
