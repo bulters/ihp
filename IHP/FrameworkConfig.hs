@@ -19,19 +19,19 @@ import IHP.Mail.Types
 defaultPort :: Int
 defaultPort = 8000
 
-portRef :: IORef Int
-portRef = unsafePerformIO (newIORef defaultPort)
+portRef :: IO (IORef Int)
+portRef = (newIORef defaultPort)
 
-defaultFrameworkConfig :: Text -> Environment -> FrameworkConfig
-defaultFrameworkConfig appHostname environment = let
+defaultFrameworkConfig :: Text -> Environment -> IO FrameworkConfig
+defaultFrameworkConfig appHostname environment = do
+    appPort <- portRef >>= readIORef
+    let
+        baseUrl = let port = appPort in "http://" <> appHostname <> (if port /= 80 then ":" <> tshow port else "")
+        requestLoggerMiddleware = RequestLogger.logStdoutDev
+        sessionCookie = defaultIHPSessionCookie baseUrl
+        mailServer = Sendmail
 
-    appPort = unsafePerformIO (readIORef portRef)
-    baseUrl = let port = appPort in "http://" <> appHostname <> (if port /= 80 then ":" <> tshow port else "")
-    requestLoggerMiddleware = RequestLogger.logStdoutDev
-    sessionCookie = defaultIHPSessionCookie baseUrl
-    mailServer = Sendmail
-
-    in FrameworkConfig {..}
+    pure FrameworkConfig {..}
 
 
 data FrameworkConfig = FrameworkConfig 
@@ -93,7 +93,7 @@ initAppPort = do
     case portStr of
         Just portStr -> do
             let port = fromMaybe (error "PORT: Invalid value") (readMay portStr)
-            writeIORef portRef port
+            portRef >>= (flip writeIORef) port
             pure port
         Nothing -> pure defaultPort
 

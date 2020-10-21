@@ -21,7 +21,7 @@ instance FrontController RootApplication where
 instance Controller DemoController where
     action DemoAction = renderPlain "Hello World!"
 
-config :: FrameworkConfig
+config :: IO FrameworkConfig
 config = let
     environment = Development
     baseUrl = "http://localhost:8000"

@@ -29,8 +29,9 @@ import qualified IHP.AutoRefresh as AutoRefresh
 import qualified IHP.AutoRefresh.Types as AutoRefresh
 import qualified IHP.WebSocket as WS
 
-run :: (FrontController FrameworkConfig.RootApplication) => FrameworkConfig -> IO ()
-run frameworkConfig = do
+run :: (FrontController FrameworkConfig.RootApplication) => IO FrameworkConfig -> IO ()
+run getFrameworkConfig = do
+    frameworkConfig <- getFrameworkConfig
     databaseUrl <- appDatabaseUrl
     session <- Vault.newKey
     port <- FrameworkConfig.initAppPort
