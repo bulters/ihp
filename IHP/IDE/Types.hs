@@ -8,6 +8,7 @@ import qualified System.FSNotify as FS
 import qualified Network.WebSockets as Websocket
 import qualified Data.ByteString.Char8 as ByteString
 import IHP.IDE.PortConfig
+import IHP.FrameworkConfig (FrameworkConfig)
 import Data.String.Conversions (cs)
 import qualified Data.Text as Text
 
@@ -147,7 +148,21 @@ data Context = Context
     , portConfig :: PortConfig
     , appStateRef :: IORef AppState
     , isDebugMode :: Bool
+    , frameworkConfig :: FrameworkConfig
+    }
+
+data ContextEqualitySubset = ContextEqualitySubset
+    { actionVar_ :: MVar Action
+    , portConfig_ :: PortConfig
+    , appStateRef_ :: IORef AppState
+    , isDebugMode_ :: Bool
     } deriving (Eq)
+
+toEqualitySubset :: Context -> ContextEqualitySubset
+toEqualitySubset (Context var pconf appstate mode _) = ContextEqualitySubset var pconf appstate mode
+
+instance Eq Context where
+    a == b = toEqualitySubset a == toEqualitySubset b
 
 dispatch :: (?context :: Context) => Action -> IO ()
 dispatch = let Context { .. } = ?context in putMVar actionVar
