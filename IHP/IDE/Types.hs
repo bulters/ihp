@@ -8,7 +8,7 @@ import qualified System.FSNotify as FS
 import qualified Network.WebSockets as Websocket
 import qualified Data.ByteString.Char8 as ByteString
 import IHP.IDE.PortConfig
-import IHP.FrameworkConfig (FrameworkConfig)
+import IHP.FrameworkConfig (FrameworkConfig, FrameworkConfigProxy, extractConfig)
 import Data.String.Conversions (cs)
 import qualified Data.Text as Text
 
@@ -150,6 +150,9 @@ data Context = Context
     , isDebugMode :: Bool
     , frameworkConfig :: FrameworkConfig
     }
+
+instance FrameworkConfigProxy Context where
+    extractConfig = frameworkConfig
 
 data ContextEqualitySubset = ContextEqualitySubset
     { actionVar_ :: MVar Action

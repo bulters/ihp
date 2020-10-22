@@ -86,7 +86,7 @@ class HasPath controller where
 -- >>> urlTo ShowUserAction { userId = "a32913dd-ef80-4f3e-9a91-7879e17b2ece" }
 -- "http://localhost:8000/ShowUser?userId=a32913dd-ef80-4f3e-9a91-7879e17b2ece"
 urlTo :: (?requestContext :: RequestContext, HasPath action) => action -> Text
-urlTo action = (FrameworkConfig.baseUrl . frameworkConfig) ?requestContext <> pathTo action
+urlTo action = FrameworkConfig.baseUrl ?requestContext <> pathTo action
 {-# INLINE urlTo #-}
 
 class HasPath controller => CanRoute controller where

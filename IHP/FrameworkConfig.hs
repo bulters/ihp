@@ -23,22 +23,22 @@ portRef :: IO (IORef Int)
 portRef = (newIORef defaultPort)
 
 defaultFrameworkConfig :: Text -> Environment -> IO FrameworkConfig
-defaultFrameworkConfig appHostname environment = do
-    appPort <- portRef >>= readIORef
+defaultFrameworkConfig appHostname_ environment_ = do
+    appPort_ <- portRef >>= readIORef
     let
-        baseUrl = let port = appPort in "http://" <> appHostname <> (if port /= 80 then ":" <> tshow port else "")
-        requestLoggerMiddleware = RequestLogger.logStdoutDev
-        sessionCookie = defaultIHPSessionCookie baseUrl
-        mailServer = Sendmail
+        baseUrl_ = let port = appPort_ in "http://" <> appHostname_ <> (if port /= 80 then ":" <> tshow port else "")
+        requestLoggerMiddleware_ = RequestLogger.logStdoutDev
+        sessionCookie_ = defaultIHPSessionCookie baseUrl_
+        mailServer_ = Sendmail
 
     pure FrameworkConfig {..}
 
 
 data FrameworkConfig = FrameworkConfig 
-    { appHostname :: Text
-    , environment :: Environment
-    , appPort :: Int
-    , baseUrl :: Text
+    { appHostname_ :: Text
+    , environment_ :: Environment
+    , appPort_ :: Int
+    , baseUrl_ :: Text
 
     -- | Provides IHP with a middleware to log requests and responses.
     --
@@ -49,7 +49,7 @@ data FrameworkConfig = FrameworkConfig
     -- 
     --
     -- Set @requestLoggerMiddleware = \application -> application@ to disable request logging.
-    , requestLoggerMiddleware :: Middleware
+    , requestLoggerMiddleware_ :: Middleware
 
     -- | Provides the default settings for the session cookie.
     --
@@ -62,11 +62,12 @@ data FrameworkConfig = FrameworkConfig
     --
     -- __Example: Set max age to 90 days__
     -- > sessionCookie = defaultIHPSessionCookie { Cookie.setCookieMaxAge = Just (fromIntegral (60 * 60 * 24 * 90)) }
-    , sessionCookie :: Cookie.SetCookie
+    , sessionCookie_ :: Cookie.SetCookie
 
-    , mailServer :: MailServer
+    , mailServer_ :: MailServer
     }
 
+<<<<<<< HEAD
     -- | How long db connection are kept alive inside the connecton pool when they're idle
     dbPoolIdleTime :: NominalDiffTime
     dbPoolIdleTime = 60
@@ -74,6 +75,36 @@ data FrameworkConfig = FrameworkConfig
     -- | Max number of db connections the connection pool can open to the database
     dbPoolMaxConnections :: Int
     dbPoolMaxConnections = 20
+=======
+class FrameworkConfigProxy a where
+    extractConfig :: a -> FrameworkConfig
+
+    appHostname :: a -> Text
+    appHostname = appHostname_ . extractConfig
+
+    environment :: a -> Environment
+    environment = environment_ . extractConfig
+
+    appPort :: a -> Int
+    appPort = appPort_ . extractConfig
+
+    baseUrl :: a -> Text
+    baseUrl = baseUrl_ . extractConfig
+
+    requestLoggerMiddleware :: a -> Middleware
+    requestLoggerMiddleware = requestLoggerMiddleware_ . extractConfig
+
+    sessionCookie :: a -> Cookie.SetCookie
+    sessionCookie = sessionCookie_ . extractConfig
+
+    mailServer :: a -> MailServer
+    mailServer = mailServer_ . extractConfig
+
+instance FrameworkConfigProxy FrameworkConfig where
+    extractConfig = id
+
+    
+>>>>>>> Add FrameworkConfigProxy typeclass for easier access
 
 -- | Returns the default IHP session cookie configuration. Useful when you want to override the default settings in 'sessionCookie'
 defaultIHPSessionCookie :: Text -> Cookie.SetCookie

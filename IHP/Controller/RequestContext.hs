@@ -9,7 +9,7 @@ import           Network.Wai                   (Request, Response, ResponseRecei
 import           Network.Wai.Parse (File, Param)
 import qualified Data.Vault.Lazy               as Vault
 import           Network.Wai.Session           (Session)
-import           IHP.FrameworkConfig           (FrameworkConfig)
+import           IHP.FrameworkConfig           (FrameworkConfig, FrameworkConfigProxy, extractConfig)
 
 type Respond = Response -> IO ResponseReceived
 
@@ -21,3 +21,6 @@ data RequestContext = RequestContext
     , vault :: (Vault.Key (Session IO String String))
     , frameworkConfig :: FrameworkConfig
     }
+
+instance FrameworkConfigProxy RequestContext where
+    extractConfig = frameworkConfig

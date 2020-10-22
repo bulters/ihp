@@ -32,7 +32,7 @@ buildMail mail = let ?mail = mail in simpleMail (to mail) from subject (cs $ tex
 --
 -- Uses the mail server provided in the controller context, configured in Config/Config.hs
 sendMail :: (BuildMail mail, ?requestContext :: RequestContext ) => mail -> IO ()
-sendMail mail = buildMail mail >>= sendWithMailServer ((mailServer . frameworkConfig) ?requestContext)
+sendMail mail = buildMail mail >>= sendWithMailServer (Config.mailServer ?requestContext)
 
 sendWithMailServer :: MailServer -> Mail -> IO ()
 sendWithMailServer SES { .. } mail = do
