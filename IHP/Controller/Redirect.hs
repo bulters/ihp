@@ -15,8 +15,6 @@ import Data.Maybe (fromJust)
 import Network.HTTP.Types (status200, status302)
 import GHC.Records
 
-import IHP.FrameworkConfig (FrameworkConfig)
-import qualified IHP.FrameworkConfig as FrameworkConfig
 import IHP.ControllerSupport
 
 -- | Redirects to an action
@@ -41,7 +39,7 @@ redirectTo action = redirectToPath (pathTo action)
 -- Use 'redirectTo' if you want to redirect to a controller action.
 {-# INLINE redirectToPath #-}
 redirectToPath :: (?requestContext :: RequestContext) => Text -> IO ()
-redirectToPath path = redirectToUrl ((FrameworkConfig.baseUrl ?requestContext) <> path)
+redirectToPath path = redirectToUrl (configBaseUrl <> path)
 
 -- | Redirects to a url (given as a string)
 -- 

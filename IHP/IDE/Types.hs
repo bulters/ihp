@@ -7,8 +7,12 @@ import qualified GHC.IO.Handle as Handle
 import qualified System.FSNotify as FS
 import qualified Network.WebSockets as Websocket
 import qualified Data.ByteString.Char8 as ByteString
+import Network.Wai (Middleware)
+import qualified Web.Cookie as Cookie
+import IHP.Mail.Types (MailServer)
+import IHP.Environment
 import IHP.IDE.PortConfig
-import IHP.FrameworkConfig (FrameworkConfig, FrameworkConfigProxy, extractConfig)
+import IHP.FrameworkConfig as FrameworkConfig
 import Data.String.Conversions (cs)
 import qualified Data.Text as Text
 
@@ -151,8 +155,32 @@ data Context = Context
     , frameworkConfig :: FrameworkConfig
     }
 
-instance FrameworkConfigProxy Context where
-    extractConfig = frameworkConfig
+-- Proxies FrameworkConfig fields contained in the RequestContext
+
+configFrameworkConfig :: (?context :: Context) => FrameworkConfig
+configFrameworkConfig = frameworkConfig ?context
+
+configAppHostname :: (?context :: Context) => Text
+configAppHostname = (FrameworkConfig.appHostname . frameworkConfig) ?context
+
+configEnvironment :: (?context :: Context) => Environment
+configEnvironment = (FrameworkConfig.environment . frameworkConfig) ?context
+
+configAppPort :: (?context :: Context) => Int
+configAppPort = (FrameworkConfig.appPort . frameworkConfig) ?context
+
+configBaseUrl :: (?context :: Context) => Text
+configBaseUrl = (FrameworkConfig.baseUrl . frameworkConfig) ?context
+
+configRequestLoggerMiddleware :: (?context :: Context) => Middleware
+configRequestLoggerMiddleware = (FrameworkConfig.requestLoggerMiddleware . frameworkConfig) ?context
+
+configSessionCookie :: (?context :: Context) => Cookie.SetCookie
+configSessionCookie = (FrameworkConfig.sessionCookie . frameworkConfig) ?context
+
+configMailServer :: (?context :: Context) => MailServer
+configMailServer = (FrameworkConfig.mailServer . frameworkConfig) ?context
+
 
 data ContextEqualitySubset = ContextEqualitySubset
     { actionVar_ :: MVar Action

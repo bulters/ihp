@@ -86,7 +86,7 @@ displayException exception action additionalInfo = do
 
     let displayGenericError = genericHandler exception action additionalInfo
 
-    if environment ?requestContext == Environment.Development
+    if configEnvironment == Environment.Development
         then supportingHandlers
             |> head
             |> fromMaybe displayGenericError
