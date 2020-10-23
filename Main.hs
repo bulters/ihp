@@ -29,4 +29,4 @@ config = let
     in defaultFrameworkConfig baseUrl environment
 
 main :: IO ()
-main = IHP.Server.run config
+main = config >>= IHP.Server.run
