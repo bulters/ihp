@@ -62,8 +62,6 @@ startToolServer = do
     
 startToolServer' :: (?context :: Context) => Int -> Bool -> IO ()
 startToolServer' port isDebugMode = do
-    Config.portRef >>= (flip writeIORef) port
-
     session <- Vault.newKey
     store <- fmap clientsessionStore (ClientSession.getKey "Config/client_session_key.aes")
     let sessionMiddleware :: Wai.Middleware = withSession store "SESSION" configSessionCookie session

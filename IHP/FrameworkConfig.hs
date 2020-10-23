@@ -18,12 +18,9 @@ import IHP.Mail.Types
 defaultPort :: Int
 defaultPort = 8000
 
-portRef :: IO (IORef Int)
-portRef = (newIORef defaultPort)
-
 defaultFrameworkConfig :: Text -> Environment -> IO FrameworkConfig
 defaultFrameworkConfig appHostname environment = do
-    appPort <- portRef >>= readIORef
+    appPort <- initAppPort
     let
         baseUrl = let port = appPort in "http://" <> appHostname <> (if port /= 80 then ":" <> tshow port else "")
         requestLoggerMiddleware = RequestLogger.logStdoutDev
@@ -127,10 +124,7 @@ initAppPort :: IO Int
 initAppPort = do
     portStr <- Environment.lookupEnv "PORT"
     case portStr of
-        Just portStr -> do
-            let port = fromMaybe (error "PORT: Invalid value") (readMay portStr)
-            portRef >>= (flip writeIORef) port
-            pure port
+        Just portStr -> pure $ fromMaybe (error "PORT: Invalid value") (readMay portStr)
         Nothing -> pure defaultPort
 
 appDatabaseUrl :: IO ByteString
