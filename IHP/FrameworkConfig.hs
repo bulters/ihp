@@ -20,7 +20,8 @@ defaultPort = 8000
 
 defaultFrameworkConfig :: Text -> Environment -> IO FrameworkConfig
 defaultFrameworkConfig appHostname environment = do
-    appPort <- initAppPort
+    appPort <- defaultAppPort
+    databaseUrl <- defaultDatabaseUrl
     let
         baseUrl = let port = appPort in "http://" <> appHostname <> (if port /= 80 then ":" <> tshow port else "")
         requestLoggerMiddleware = RequestLogger.logStdoutDev
@@ -64,6 +65,7 @@ data FrameworkConfig = FrameworkConfig
 
     , mailServer :: MailServer
 
+    , databaseUrl :: ByteString 
     -- | How long db connection are kept alive inside the connecton pool when they're idle
     , dbPoolIdleTime :: NominalDiffTime
 
@@ -83,15 +85,15 @@ defaultIHPSessionCookie baseUrl = def
 
 data RootApplication = RootApplication deriving (Eq, Show)
 
-initAppPort :: IO Int
-initAppPort = do
+defaultAppPort :: IO Int
+defaultAppPort = do
     portStr <- Environment.lookupEnv "PORT"
     case portStr of
         Just portStr -> pure $ fromMaybe (error "PORT: Invalid value") (readMay portStr)
         Nothing -> pure defaultPort
 
-appDatabaseUrl :: IO ByteString
-appDatabaseUrl = do
+defaultDatabaseUrl :: IO ByteString
+defaultDatabaseUrl = do
     currentDirectory <- getCurrentDirectory
     let defaultDatabaseUrl = "postgresql:///app?host=" <> cs currentDirectory <> "/build/db"
     (Environment.lookupEnv "DATABASE_URL") >>= (pure . maybe defaultDatabaseUrl cs )

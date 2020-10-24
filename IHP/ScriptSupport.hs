@@ -11,15 +11,14 @@ import qualified IHP.Environment as Env
 import IHP.ModelSupport
 import qualified Database.PostgreSQL.Simple as PG
 
--- | A script is just an IO action which requires a database connection
+-- | A script is just an IO action which requires a database connection and framework config
 type Script = (?modelContext :: ModelContext, ?frameworkConfig :: Config.FrameworkConfig) => IO ()
 
 -- | Initializes IHP and then runs the script inside the framework context
 runScript :: (?frameworkConfigIO :: IO (Config.FrameworkConfig)) => Script -> IO ()
 runScript taskMain = do
-    databaseUrl <- Config.appDatabaseUrl
-    frameworkConfig <- ?frameworkConfigIO
-    modelContext <- (\modelContext -> modelContext { queryDebuggingEnabled = Env.isDevelopment configEnvironment }) <$> createModelContext Config.dbPoolIdleTime Config.dbPoolMaxConnections databaseUrl
+    frameworkConfig@Config.FrameworkConfig { environment, dbPoolIdleTime, dbPoolMaxConnections, databaseUrl } <- ?frameworkConfigIO
+    modelContext <- (\modelContext -> modelContext { queryDebuggingEnabled = Env.isDevelopment environment }) <$> createModelContext dbPoolIdleTime dbPoolMaxConnections databaseUrl
     let ?modelContext = modelContext
     let ?frameworkConfig = frameworkConfig
     taskMain
