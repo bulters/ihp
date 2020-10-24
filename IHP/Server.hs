@@ -35,8 +35,8 @@ run frameworkConfig = do
     session <- Vault.newKey
     port <- FrameworkConfig.initAppPort
     store <- fmap clientsessionStore (ClientSession.getKey "Config/client_session_key.aes")
-    let isDevelopment = Env.isDevelopment FrameworkConfig.environment
-    modelContext <- (\modelContext -> modelContext { queryDebuggingEnabled = isDevelopment }) <$> createModelContext FrameworkConfig.dbPoolIdleTime FrameworkConfig.dbPoolMaxConnections databaseUrl
+    let isDevelopment = Env.isDevelopment (FrameworkConfig.environment frameworkConfig)
+    modelContext <- (\modelContext -> modelContext { queryDebuggingEnabled = isDevelopment }) <$> createModelContext (FrameworkConfig.dbPoolIdleTime frameworkConfig) (FrameworkConfig.dbPoolMaxConnections frameworkConfig) databaseUrl
     let ?modelContext = modelContext
     autoRefreshServer <- newIORef AutoRefresh.newAutoRefreshServer
     let ?applicationContext = ApplicationContext { modelContext = ?modelContext, session, autoRefreshServer, frameworkConfig }

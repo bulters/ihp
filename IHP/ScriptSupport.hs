@@ -19,7 +19,7 @@ runScript :: (?frameworkConfigIO :: IO (Config.FrameworkConfig)) => Script -> IO
 runScript taskMain = do
     databaseUrl <- Config.appDatabaseUrl
     frameworkConfig <- ?frameworkConfigIO
-    modelContext <- (\modelContext -> modelContext { queryDebuggingEnabled = Env.isDevelopment confEnvironment }) <$> createModelContext Config.dbPoolIdleTime Config.dbPoolMaxConnections databaseUrl
+    modelContext <- (\modelContext -> modelContext { queryDebuggingEnabled = Env.isDevelopment configEnvironment }) <$> createModelContext Config.dbPoolIdleTime Config.dbPoolMaxConnections databaseUrl
     let ?modelContext = modelContext
     let ?frameworkConfig = frameworkConfig
     taskMain

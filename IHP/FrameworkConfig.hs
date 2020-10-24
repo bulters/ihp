@@ -26,6 +26,8 @@ defaultFrameworkConfig appHostname environment = do
         requestLoggerMiddleware = RequestLogger.logStdoutDev
         sessionCookie = defaultIHPSessionCookie baseUrl
         mailServer = Sendmail
+        dbPoolIdleTime = 60
+        dbPoolMaxConnections = 20
 
     pure FrameworkConfig {..}
 
@@ -61,53 +63,14 @@ data FrameworkConfig = FrameworkConfig
     , sessionCookie :: Cookie.SetCookie
 
     , mailServer :: MailServer
-    }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     -- | How long db connection are kept alive inside the connecton pool when they're idle
-    dbPoolIdleTime :: NominalDiffTime
-    dbPoolIdleTime = 60
+    , dbPoolIdleTime :: NominalDiffTime
 
     -- | Max number of db connections the connection pool can open to the database
-    dbPoolMaxConnections :: Int
-    dbPoolMaxConnections = 20
-=======
-class FrameworkConfigProxy a where
-    extractConfig :: a -> FrameworkConfig
+    , dbPoolMaxConnections :: Int
+}
 
-    appHostname :: a -> Text
-    appHostname = appHostname_ . extractConfig
-
-    environment :: a -> Environment
-    environment = environment_ . extractConfig
-
-    appPort :: a -> Int
-    appPort = appPort_ . extractConfig
-
-    baseUrl :: a -> Text
-    baseUrl = baseUrl_ . extractConfig
-
-    requestLoggerMiddleware :: a -> Middleware
-    requestLoggerMiddleware = requestLoggerMiddleware_ . extractConfig
-
-    sessionCookie :: a -> Cookie.SetCookie
-    sessionCookie = sessionCookie_ . extractConfig
-
-    mailServer :: a -> MailServer
-    mailServer = mailServer_ . extractConfig
-
-instance FrameworkConfigProxy FrameworkConfig where
-    extractConfig = id
-
-    
->>>>>>> Add FrameworkConfigProxy typeclass for easier access
-=======
->>>>>>> Remove FrameworkConfigProxy in favour of implictly bound functions
-
-=======
->>>>>>> Fix RequestContext issue with scripts
 -- | Returns the default IHP session cookie configuration. Useful when you want to override the default settings in 'sessionCookie'
 defaultIHPSessionCookie :: Text -> Cookie.SetCookie
 defaultIHPSessionCookie baseUrl = def
