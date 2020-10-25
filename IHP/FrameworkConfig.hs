@@ -58,12 +58,6 @@ newtype DatabaseUrl = DatabaseUrl ByteString
 
 type ConfigBuilder = State.StateT TMap.TMap IO ()
 
-appConfig :: ConfigBuilder
-appConfig = do
-    option Production
-    option $ AppHostname "localhost"
-    option $ BaseUrl "https://example.com"
-
 -- | Puts an option into the current configuration
 --
 -- In case an option already exists with the same type, it will not be overriden:
@@ -108,8 +102,8 @@ findOption = do
         |> fromMaybe (error $ "Could not find " <> show (Typeable.typeOf (undefined :: option)))
         |> pure
 
-getFrameworkConfig :: IO FrameworkConfig
-getFrameworkConfig = do
+buildFrameworkConfig :: ConfigBuilder -> IO FrameworkConfig
+buildFrameworkConfig appConfig = do
     let resolve = do
             (AppHostname appHostname) <- findOption @AppHostname
             environment <- findOption @Environment
@@ -127,9 +121,6 @@ getFrameworkConfig = do
     (frameworkConfig, _) <- State.runStateT (appConfig >> ihpDefaultConfig >> resolve) TMap.empty
 
     pure frameworkConfig
-
-
-
 
 data FrameworkConfig = FrameworkConfig 
     { appHostname :: Text

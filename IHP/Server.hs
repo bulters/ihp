@@ -28,8 +28,9 @@ import qualified IHP.AutoRefresh as AutoRefresh
 import qualified IHP.AutoRefresh.Types as AutoRefresh
 import qualified IHP.WebSocket as WS
 
-run :: (FrontController RootApplication) => FrameworkConfig -> IO ()
-run frameworkConfig@FrameworkConfig { environment, appPort, dbPoolMaxConnections, dbPoolIdleTime, databaseUrl, sessionCookie, requestLoggerMiddleware }  = do
+run :: (FrontController RootApplication) => ConfigBuilder -> IO ()
+run configBuilder = do
+    frameworkConfig@(FrameworkConfig { environment, appPort, dbPoolMaxConnections, dbPoolIdleTime, databaseUrl, sessionCookie, requestLoggerMiddleware }) <- buildFrameworkConfig configBuilder
     session <- Vault.newKey
     store <- fmap clientsessionStore (ClientSession.getKey "Config/client_session_key.aes")
     let isDevelopment = Env.isDevelopment environment

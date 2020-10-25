@@ -22,21 +22,10 @@ instance FrontController RootApplication where
 instance Controller DemoController where
     action DemoAction = renderPlain "Hello World!"
 
-config :: IO FrameworkConfig
+config :: ConfigBuilder
 config = do
-    appPort <- defaultAppPort
-    databaseUrl <- defaultDatabaseUrl
-    let
-        environment = Development
-        appHostname = "localhost"
-        baseUrl = let port = appPort in "http://" <> appHostname <> (if port /= 80 then ":" <> tshow port else "")
-        requestLoggerMiddleware = defaultLoggerMiddleware
-        sessionCookie = defaultIHPSessionCookie baseUrl
-        mailServer = Sendmail
-        dbPoolIdleTime = 60
-        dbPoolMaxConnections = 20
-
-    pure FrameworkConfig {..}
+    option Development
+    option $ AppHostname "localhost"
 
 main :: IO ()
-main = config >>= IHP.Server.run
+main = IHP.Server.run config
