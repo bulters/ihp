@@ -14,22 +14,121 @@ import qualified Web.Cookie as Cookie
 import Data.Default (def)
 import Data.Time.Clock (NominalDiffTime)
 import IHP.Mail.Types
+import qualified Control.Monad.Trans.State.Lazy as State
+import Data.Maybe (fromJust)
+import qualified Data.TMap as TMap
+import qualified Data.Typeable as Typeable
+import IHP.HaskellSupport hiding (set)
 
-developmentFrameworkConfig :: IO FrameworkConfig
-developmentFrameworkConfig = do
-    appPort <- defaultAppPort
-    databaseUrl <- defaultDatabaseUrl
-    let
-        environment = Development
-        appHostname = "localhost"
-        baseUrl = let port = appPort in "http://" <> appHostname <> (if port /= 80 then ":" <> tshow port else "")
-        requestLoggerMiddleware = defaultLoggerMiddleware
-        sessionCookie = defaultIHPSessionCookie baseUrl
-        mailServer = Sendmail
-        dbPoolIdleTime = 60
-        dbPoolMaxConnections = 20
+newtype AppHostname = AppHostname Text
+newtype AppPort = AppPort Int
+newtype BaseUrl = BaseUrl Text
 
-    pure FrameworkConfig {..}
+-- | Provides IHP with a middleware to log requests and responses.
+--
+-- By default this uses the RequestLogger middleware from wai-extra. Take a look at the wai-extra
+-- documentation when you want to customize the request logging.
+--
+-- See https://hackage.haskell.org/package/wai-extra-3.0.29.2/docs/Network-Wai-Middleware-RequestLogger.html
+-- 
+--
+-- Set @requestLoggerMiddleware = \application -> application@ to disable request logging.
+newtype RequestLoggerMiddleware = RequestLoggerMiddleware Middleware
+
+-- | Provides the default settings for the session cookie.
+--
+-- - Max Age: 30 days
+-- - Same Site Policy: Lax
+-- - HttpOnly (no access through JS)
+-- - secure, when baseUrl is a https url
+--
+-- Override this to set e.g. a custom max age or change the default same site policy.
+--
+-- __Example: Set max age to 90 days__
+-- > sessionCookie = defaultIHPSessionCookie { Cookie.setCookieMaxAge = Just (fromIntegral (60 * 60 * 24 * 90)) }
+newtype SessionCookie = SessionCookie Cookie.SetCookie
+
+-- | How long db connection are kept alive inside the connecton pool when they're idle
+newtype DBPoolIdleTime = DBPoolIdleTime NominalDiffTime
+
+-- | Max number of db connections the connection pool can open to the database
+newtype DBPoolMaxConnections = DBPoolMaxConnections Int
+
+newtype DatabaseUrl = DatabaseUrl ByteString
+
+type ConfigBuilder = State.StateT TMap.TMap IO ()
+
+appConfig :: ConfigBuilder
+appConfig = do
+    option Production
+    option $ AppHostname "localhost"
+    option $ BaseUrl "https://example.com"
+
+-- | Puts an option into the current configuration
+--
+-- In case an option already exists with the same type, it will not be overriden:
+-- 
+-- > option Production
+-- > option Development
+-- > findOption @Environment
+--
+-- This code will return 'Production' as the second call to 'option' is ignored to not override the existing option.
+option :: forall option. Typeable option => option -> State.StateT TMap.TMap IO ()
+option value = State.modify (\map -> if TMap.member @option map then map else TMap.insert value map)
+
+ihpDefaultConfig :: ConfigBuilder
+ihpDefaultConfig = do
+    option Development
+    option $ AppHostname "localhost"
+
+    port <- liftIO defaultAppPort
+    option $ AppPort port
+
+    option $ RequestLoggerMiddleware defaultLoggerMiddleware
+
+    option $ Sendmail
+
+    databaseUrl <- liftIO defaultDatabaseUrl
+    option $ DatabaseUrl databaseUrl
+    option $ DBPoolIdleTime 60
+    option $ DBPoolMaxConnections 20
+
+    (AppPort port) <- findOption @AppPort
+    (AppHostname appHostname) <- findOption @AppHostname
+    option $ BaseUrl ("http://" <> appHostname <> (if port /= 80 then ":" <> tshow port else ""))
+
+    (BaseUrl currentBaseUrl) <- findOption @BaseUrl
+    option $ SessionCookie (defaultIHPSessionCookie currentBaseUrl)
+
+findOption :: forall option. Typeable option => State.StateT TMap.TMap IO option
+findOption = do
+    options <- State.get
+    options
+        |> TMap.lookup @option
+        |> fromMaybe (error $ "Could not find " <> show (Typeable.typeOf (undefined :: option)))
+        |> pure
+
+getFrameworkConfig :: IO FrameworkConfig
+getFrameworkConfig = do
+    let resolve = do
+            (AppHostname appHostname) <- findOption @AppHostname
+            environment <- findOption @Environment
+            (AppPort appPort) <- findOption @AppPort
+            (BaseUrl baseUrl) <- findOption @BaseUrl
+            (RequestLoggerMiddleware requestLoggerMiddleware) <- findOption @RequestLoggerMiddleware
+            (SessionCookie sessionCookie) <- findOption @SessionCookie
+            mailServer <- findOption @MailServer
+            (DBPoolIdleTime dbPoolIdleTime) <- findOption @DBPoolIdleTime
+            (DBPoolMaxConnections dbPoolMaxConnections) <- findOption @DBPoolMaxConnections
+            let databaseUrl = ""
+            
+            pure FrameworkConfig { .. }
+
+    (frameworkConfig, _) <- State.runStateT (appConfig >> ihpDefaultConfig >> resolve) TMap.empty
+
+    pure frameworkConfig
+
+
 
 
 data FrameworkConfig = FrameworkConfig 
