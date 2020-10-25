@@ -6,6 +6,7 @@ import IHP.FrameworkConfig
 import qualified IHP.Server
 import IHP.RouterSupport
 import IHP.ControllerPrelude
+import IHP.Mail
 --import IHP.GenericController
 
 data DemoController = DemoAction deriving (Eq, Show, Data)
@@ -22,11 +23,20 @@ instance Controller DemoController where
     action DemoAction = renderPlain "Hello World!"
 
 config :: IO FrameworkConfig
-config = let
-    environment = Development
-    baseUrl = "http://localhost:8000"
+config = do
+    appPort <- defaultAppPort
+    databaseUrl <- defaultDatabaseUrl
+    let
+        environment = Development
+        appHostname = "localhost"
+        baseUrl = let port = appPort in "http://" <> appHostname <> (if port /= 80 then ":" <> tshow port else "")
+        requestLoggerMiddleware = defaultLoggerMiddleware
+        sessionCookie = defaultIHPSessionCookie baseUrl
+        mailServer = Sendmail
+        dbPoolIdleTime = 60
+        dbPoolMaxConnections = 20
 
-    in defaultFrameworkConfig baseUrl environment
+    pure FrameworkConfig {..}
 
 main :: IO ()
 main = config >>= IHP.Server.run

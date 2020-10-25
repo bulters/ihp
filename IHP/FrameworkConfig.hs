@@ -1,5 +1,5 @@
 module IHP.FrameworkConfig where
-
+                                 
 import ClassyPrelude
 import qualified System.Environment as Environment
 import System.Directory (getCurrentDirectory)
@@ -9,22 +9,21 @@ import qualified System.Directory as Directory
 import qualified Data.Text as Text
 import qualified System.Process as Process
 import Network.Wai (Middleware)
-import qualified Network.Wai.Middleware.RequestLogger as RequestLogger
+import qualified Network.Wai.Middleware.RequestLogger as RequestLogger (logStdoutDev)
 import qualified Web.Cookie as Cookie
 import Data.Default (def)
 import Data.Time.Clock (NominalDiffTime)
 import IHP.Mail.Types
 
-defaultPort :: Int
-defaultPort = 8000
-
-defaultFrameworkConfig :: Text -> Environment -> IO FrameworkConfig
-defaultFrameworkConfig appHostname environment = do
+developmentFrameworkConfig :: IO FrameworkConfig
+developmentFrameworkConfig = do
     appPort <- defaultAppPort
     databaseUrl <- defaultDatabaseUrl
     let
+        environment = Development
+        appHostname = "localhost"
         baseUrl = let port = appPort in "http://" <> appHostname <> (if port /= 80 then ":" <> tshow port else "")
-        requestLoggerMiddleware = RequestLogger.logStdoutDev
+        requestLoggerMiddleware = defaultLoggerMiddleware
         sessionCookie = defaultIHPSessionCookie baseUrl
         mailServer = Sendmail
         dbPoolIdleTime = 60
@@ -84,6 +83,12 @@ defaultIHPSessionCookie baseUrl = def
     }
 
 data RootApplication = RootApplication deriving (Eq, Show)
+
+defaultLoggerMiddleware :: Middleware
+defaultLoggerMiddleware = RequestLogger.logStdoutDev
+
+defaultPort :: Int
+defaultPort = 8000
 
 defaultAppPort :: IO Int
 defaultAppPort = do

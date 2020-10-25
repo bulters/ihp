@@ -27,7 +27,7 @@ main = do
     actionVar <- newEmptyMVar
     appStateRef <- newIORef emptyAppState
     portConfig <- findAvailablePortConfig
-    frameworkConfig <- Config.defaultFrameworkConfig "localhost" Development
+    frameworkConfig <- Config.developmentFrameworkConfig
 
     -- Start the dev server in Debug mode by setting the env var DEBUG=1
     -- Like: $ DEBUG=1 ./start
